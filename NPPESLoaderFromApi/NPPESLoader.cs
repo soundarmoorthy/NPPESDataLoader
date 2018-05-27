@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using MongoDB.Bson.Serialization;
 using System.Threading;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Mongo.Nppes.Loader
 {
@@ -25,10 +27,10 @@ namespace Mongo.Nppes.Loader
             var url = "mongodb://localhost:27017";
             var client = new MongoClient(url);
             var database = client.GetDatabase("NPPEES");
-            var collection = database.GetCollection<BsonDocument>("US_Provider_Roaster");
+            var collection = database.GetCollection<BsonDocument>("ZipCodeTimeZone");
 
             us = client.GetDatabase("US");
-            nppes = us.GetCollection<BsonDocument>("NPPES_TEMP"); 
+            nppes = us.GetCollection<BsonDocument>("NPPES_ORG"); 
             nppesRequests = new NPPESClient(process);
 
             Console.Title = "Provider API lookup and store";
@@ -48,17 +50,16 @@ namespace Mongo.Nppes.Loader
         {
             CancellationTokenSource source = new CancellationTokenSource();
             CancellationToken token = source.Token;
-            var t = collection.Find("{Entity_Type_Code : '2'}").ForEachAsync(b =>
+            var t = collection.Find("{}").ForEachAsync(b =>
             {
-                var id = long.Parse(get("_id", b));
-                if (id % 2 == 0)
+                var str = get("zip", b);
+                int zip = 0;
+                if (int.TryParse(str, out zip))
                 {
-                    GetAndPersistAsync(id);
-                    Thread.Sleep(100);
+                    GetAndPersistAsync(zip);
                 }
-            }, token );
-            t.Wait(5000);
-            source.Cancel();
+            }, token);
+            t.Wait();
         }
 
         private void GetAndPersistAsync(long npi)
@@ -70,16 +71,25 @@ namespace Mongo.Nppes.Loader
         private void process(string json)
         {
             var obj = JObject.Parse(json);
+
+            List<BsonDocument> documents = null;
             if (obj != null)
             {
-                var x = obj["results"][0];
-                var npi = x["number"].ToString();
-                var document = BsonSerializer.Deserialize<BsonDocument>(x.ToString());
-                document.Add("_id", npi);
-                document.Remove("number");
-                nppes.InsertOne(document);
+                documents = new List<BsonDocument>();
+                var results = obj["results"];
+                foreach (var result in results)
+                {
+                    var document = BsonSerializer.Deserialize<BsonDocument>(result.ToString());
+                    documents.Add(document);
+                }
+                if (documents.Any())
+                {
+                    nppes.InsertMany(documents);
+                    Console.WriteLine(string.Format("\t\tInserted [Pending Insert : {0}]", nppesRequests.Count));
+                }
             }
-            Console.WriteLine("\t\tInserted");
+            else
+                Console.WriteLine("\t\t**No Result**");
         }
 
         private static string get(string name, BsonDocument b)

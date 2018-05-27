@@ -18,9 +18,18 @@ namespace Mongo.Nppes.Loader
         }
 
 
+        public int Count
+        {
+            get
+            {
+                return running.Count;
+            }
+        }
+
+
         ConcurrentDictionary<int,Task> running = new ConcurrentDictionary<int, Task>();
 
-        const string uri = "https://npiregistry.cms.hhs.gov/api/?number={0}";
+        const string uri = "https://npiregistry.cms.hhs.gov/api/?postal_code={0}&=NPI-2&limit=200";
 
         public async Task RequestAsync(long npi)
         {
@@ -33,10 +42,6 @@ namespace Mongo.Nppes.Loader
         public void WaitAll()
         {
             Task.WaitAll(running.Select(x => x.Value).ToArray());
-            while(running.Count > 0)
-            {
-                Thread.Sleep(2000);
-            }
         }
 
         private void promise(Task<WebResponse> task)
