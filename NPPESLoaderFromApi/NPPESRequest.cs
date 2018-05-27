@@ -46,7 +46,7 @@ namespace Mongo.Nppes.Loader
 
         private void promise(Task<WebResponse> task)
         {
-            Console.WriteLine("\tRecived");
+            Console.WriteLine("\tReceived");
             var response = (HttpWebResponse)task.Result;
 
             if (response.StatusCode == HttpStatusCode.OK)

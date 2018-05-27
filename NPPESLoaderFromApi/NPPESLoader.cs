@@ -7,6 +7,7 @@ using System.Threading;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Concurrent;
 
 namespace Mongo.Nppes.Loader
 {
@@ -26,40 +27,30 @@ namespace Mongo.Nppes.Loader
         {
             var url = "mongodb://localhost:27017";
             var client = new MongoClient(url);
-            var database = client.GetDatabase("NPPEES");
-            var collection = database.GetCollection<BsonDocument>("ZipCodeTimeZone");
-
             us = client.GetDatabase("US");
-            nppes = us.GetCollection<BsonDocument>("NPPES_ORG"); 
+            nppes = us.GetCollection<BsonDocument>("NPPES1"); 
             nppesRequests = new NPPESClient(process);
 
             Console.Title = "Provider API lookup and store";
-            await Queue(collection);
+            await Queue();
 
-            awaitAllPending();
+            awaitPendingInserts();
 
         }
 
-        private void awaitAllPending()
+        private void awaitPendingInserts()
         {
             nppesRequests.WaitAll();
         }
 
 
-        private async Task Queue(IMongoCollection<BsonDocument> collection)
+        private async Task Queue()
         {
-            CancellationTokenSource source = new CancellationTokenSource();
-            CancellationToken token = source.Token;
-            var t = collection.Find("{}").ForEachAsync(b =>
+            foreach (var zip in ZCTA.Zips)
             {
-                var str = get("zip", b);
-                int zip = 0;
-                if (int.TryParse(str, out zip))
-                {
-                    GetAndPersistAsync(zip);
-                }
-            }, token);
-            t.Wait();
+                GetAndPersistAsync(zip);
+                Thread.Sleep(100);
+            }
         }
 
         private void GetAndPersistAsync(long npi)
@@ -82,15 +73,28 @@ namespace Mongo.Nppes.Loader
                     var document = BsonSerializer.Deserialize<BsonDocument>(result.ToString());
                     documents.Add(document);
                 }
+
                 if (documents.Any())
                 {
-                    nppes.InsertMany(documents);
-                    Console.WriteLine(string.Format("\t\tInserted [Pending Insert : {0}]", nppesRequests.Count));
+                    nppes.InsertManyAsync(documents).ContinueWith(display);
                 }
             }
-            else
-                Console.WriteLine("\t\t**No Result**");
         }
+
+        private void display(Task t)
+        {
+            if(t.Exception == null)
+            {
+
+                Console.WriteLine("\t\t Inserted");
+            }
+            else
+            {
+                Console.WriteLine("\t\t"+t.Exception.Message);
+            }
+        }
+
+        ConcurrentDictionary<int, Task> insertions = new ConcurrentDictionary<int, Task>();
 
         private static string get(string name, BsonDocument b)
         {
