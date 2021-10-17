@@ -1,2 +1,8 @@
+.vs/
 **/bin/*
 **/obj/*
+packages/
+NPPESLoaderFromApi/Core/
+NPPESLoaderFromApi/libmongocrypt.dylib
+NPPESLoaderFromApi/libmongocrypt.so
+NPPESLoaderFromApi/mongocrypt.dll
