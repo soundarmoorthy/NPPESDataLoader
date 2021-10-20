@@ -1,4 +1,7 @@
-﻿namespace Mongo.Nppes.Loader
+﻿using System;
+using NPPES.Loader;
+
+namespace NPPES.Workflow.Launcher
 {
     class Program
     {
@@ -6,6 +9,8 @@
         {
             NPPESLoader loader = new NPPESLoader();
             loader.Run();
+            Console.ReadLine();
         }
+
     }
 }
