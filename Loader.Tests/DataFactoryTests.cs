@@ -17,7 +17,7 @@ namespace Loader.Tests
             {
                 mock.Setup(x => x.SaveProvider(json)).Returns(true);
                 mock.Setup(x => x.IsZipCodeProcessed(zipCode)).Returns(true);
-                mock.Setup(x => x.ZipCodes()).Returns(Enumerable.Empty<int>());
+                mock.Setup(x => x.ZipCodes()).Returns(Enumerable.Empty<int>().ToList());
             }
             public IData Create()
             {

@@ -1,6 +1,7 @@
 ﻿using NPPES.Loader.Data;
 using NPPES.Loader.Data.Implementation;
 using NUnit.Framework;
+using System.Linq;
 
 namespace IntegrationTests
 {
@@ -16,7 +17,8 @@ namespace IntegrationTests
         {
             IData data = new MongoData();
             var codes = data.ZipCodes();
-            Assert.IsNotNull(codes);
+
+            Assert.IsTrue(codes.Any());
         }
     }
 }

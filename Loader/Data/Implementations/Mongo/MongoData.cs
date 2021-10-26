@@ -21,17 +21,20 @@ namespace NPPES.Loader.Data.Implementation
 
         public MongoData()
         {
-            var url = LoaderConfig.Get(url_name);
-            var client = new MongoClient(url);
-            db = client.GetDatabase(db_name);
-            nppes = db.GetCollection<BsonDocument>(roaster_name);
+            db = new MongoClient(LoaderConfig.Get(url_name)).
+		            GetDatabase(LoaderConfig.Get(db_name));
+
+            nppes = db.GetCollection<BsonDocument>
+		            (LoaderConfig.Get(roaster_name));
+
+            zipEntries = db.GetCollection<BsonDocument>
+		            (LoaderConfig.Get(zip_codes));
         }
 
         bool IData.IsZipCodeProcessed(long zipCode)
         {
             try
             {
-                zipEntries = db.GetCollection<BsonDocument>(zip_codes);
                 var item = zipEntries.Find(x => x["_id"] == $"{zipCode}").Any();
                 return item;
             }
@@ -42,13 +45,12 @@ namespace NPPES.Loader.Data.Implementation
             }
         }
 
-        IEnumerable<int> IData.ZipCodes()
+        IList<int> IData.ZipCodes()
         {
-            var zipEntries = db.GetCollection<BsonDocument>(zip_codes);
-
-            foreach (var entry in zipEntries.AsQueryable())
+            List<int> zips = new List<int>();
+            foreach (var doc in zipEntries.Find(_ => true).ToList())
             {
-                var value = entry.GetElement("_id").Value;
+                var value = doc.GetElement("_id").Value;
                 if (!value.IsNumeric)
                     continue;
 
@@ -56,8 +58,9 @@ namespace NPPES.Loader.Data.Implementation
                 if (!zip.HasValue)
                     continue;
 
-                yield return zip.Value;
+                zips.Add(zip.Value);
             }
+            return zips;
         }
 
         bool IData.SaveProvider(string json)

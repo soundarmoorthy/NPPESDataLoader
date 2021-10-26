@@ -9,7 +9,7 @@ namespace NPPES.Loader.Data
 		/// Returns a list of valid zip codes for US.
 		/// </summary>
 		/// <returns>A valid 3 (or) 5 (or) 7 (or) 9 digit zip code</returns>
-        IEnumerable<Int32> ZipCodes();
+        IList<Int32> ZipCodes();
 
         /// <summary>
 		/// Given a json representation of provider NPI data stores them
