@@ -5,6 +5,7 @@ using NPPES.Loader.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
+using NPPES.Loader.Framework;
 
 namespace NPPES.Loader.Data.Implementation
 {
@@ -15,9 +16,11 @@ namespace NPPES.Loader.Data.Implementation
         private static readonly string db_name = $"{tag}:db";
         private static readonly string roaster_name = $"{tag}:roaster_collection";
         private static readonly string zip_codes = $"{tag}:zip_codes";
+        private static readonly string TRUE="true";
+        private static readonly string FALSE="false";
         IMongoDatabase db;
         IMongoCollection<BsonDocument> nppes;
-        IMongoCollection<BsonDocument> zipEntries;
+        IMongoCollection<Address> zipEntries;
 
         public MongoData()
         {
@@ -27,80 +30,130 @@ namespace NPPES.Loader.Data.Implementation
             nppes = db.GetCollection<BsonDocument>
 		            (LoaderConfig.Get(roaster_name));
 
-            zipEntries = db.GetCollection<BsonDocument>
+            zipEntries = db.GetCollection<Address>
 		            (LoaderConfig.Get(zip_codes));
         }
 
-        bool IData.IsZipCodeProcessed(long zipCode)
+        int IData.Processed(Address address)
         {
             try
             {
-                var item = zipEntries.Find(x => x["_id"] == $"{zipCode}").Any();
-                return item;
+                var filter = Builders<Address>.Filter.Eq(x => x._id, address._id);
+                var entry = zipEntries.Find(filter);
+                if (entry == null || entry.First() == null)
+                    return -1; //Unknown pincode from our list
+
+                var first = entry.First();
+
+                if (string.IsNullOrEmpty(first.Processed))
+                    return 0;
+
+                if (first.Processed == TRUE)
+                    return -1;
+
+                if (first.Processed == FALSE)
+                    return first.BatchCount + 1;
+
+                throw new InvalidProgramException("This is an invalid state for the processed attribute for zipCode " + address._id);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return false;
+                return -1;
             }
         }
 
-        IList<int> IData.ZipCodes()
+        IList<Address> IData.ZipCodes()
         {
-            List<int> zips = new List<int>();
-            foreach (var doc in zipEntries.Find(_ => true).ToList())
+            List<Address> addresses = new List<Address>();
+            foreach (var address in zipEntries.Find(_ => true).ToList())
             {
-                var value = doc.GetElement("_id").Value;
-                if (!value.IsNumeric)
-                    continue;
-
-                var zip = value.AsNullableInt32;
-                if (!zip.HasValue)
-                    continue;
-
-                zips.Add(zip.Value);
+                addresses.Add(address);
             }
-            return zips;
+            return addresses;
         }
 
-        bool IData.SaveProvider(string json)
+        bool IData.SaveProvider(NpiResponse response)
         {
             try
             {
-                AddDocuments(json);
+                AddDocuments(response);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return false;
             }
         }
 
-        private void AddDocuments(string json)
+        private void AddDocuments(NpiResponse response)
         {
-            var obj = BsonDocument.Parse(json);
+
+            var obj = BsonDocument.Parse(response.Contents);
             if (obj == null)
                 return;
+            var documents = GetDocuments(obj);
 
-            var documents = new List<BsonDocument>();
-            var results = obj["results"];
-            if (results == null)
+            if (!documents.Any())
+            {
+                ZipCodeComplete(response);
                 return;
+            }
+
+            nppes.InsertMany(documents);
+            var count = obj["result_count"].AsInt32;
+            if (count < NPIRequest.MAX_RESULTS)
+            {
+                //If we have less than MAX_RESULTS then it means that we have
+                //processed all zip codes. So we can set the "processed" flag
+                //to true
+                ZipCodeComplete(response);
+            }
+            else
+            {
+                ScheduleNext(response);
+            }
+
+        }
+
+        private IEnumerable<BsonDocument> GetDocuments(BsonDocument doc)
+        {
+            var documents = new List<BsonDocument>();
+            var results = doc["results"];
+            if (results == null)
+                return null;
 
 
             foreach (var result in results.AsBsonArray)
             {
-                var npi = result["number"].ToInt64();
                 var document = BsonSerializer.Deserialize<BsonDocument>
                     (result.ToString());
-                document.Add("_id", npi);
                 documents.Add(document);
             }
+            return documents;
+        }
 
-            if (documents.Any())
-            {
-                nppes.InsertManyAsync(documents);
-            }
+        private void ScheduleNext(NpiResponse response)
+        {
+            var add = response.Request.Address;
+            var filter = Builders<Address>.Filter.Eq(x => x._id, add._id);
+            var update = Builders<Address>.Update
+                        .Set(x => x.BatchCount, add.BatchCount + 1)
+                        .Set(x => x.Processed, FALSE);
+
+            zipEntries.UpdateOne(filter, update);
+
+            var request = NPIRequest.Next(response.Request);
+            WebRequestScheduler.Instance.Submit(request);
+        }
+
+        private void ZipCodeComplete(NpiResponse response)
+        {
+            var filter = Builders<Address>.Filter.Eq(x => x._id, response.Request.Address._id);
+            var update = Builders<Address>.Update
+                        .Set(x => x.BatchCount, response.Request.Skip + 1)
+                        .Set(x => x.Processed, TRUE);
+            var document = zipEntries.FindOneAndUpdate(filter, update);
         }
     }
 }

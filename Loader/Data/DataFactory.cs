@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
+using NPPES.Loader.Framework;
 
 namespace NPPES.Loader.Data
 {
@@ -20,10 +21,10 @@ namespace NPPES.Loader.Data
             data = overrided.Create();
         }
 
-        public static void Save(string json) => data.SaveProvider(json);
+        public static void SaveProvider(NpiResponse response) => data.SaveProvider(response);
 
-        public static bool Processed(long zipCode)=> data.IsZipCodeProcessed(zipCode);
+        public static int Processed(Address address)=> data.Processed(address);
 
-        public static IEnumerable<Int32> ZipCodes() => data.ZipCodes();
+        public static IEnumerable<Address> ZipCodes() => data.ZipCodes();
     }
 }

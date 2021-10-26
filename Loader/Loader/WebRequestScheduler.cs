@@ -8,7 +8,18 @@ namespace NPPES.Loader
 
         RoundRobinObjectEnumerator<WebRequestHandler> enumerator;
 
-        public WebRequestScheduler()
+        private static AsyncWorkerBase<NPIRequest> scheduler;
+        public static AsyncWorkerBase<NPIRequest> Instance
+        {
+            get
+            {
+                if (scheduler == null)
+                    scheduler = new WebRequestScheduler();
+                return scheduler;
+            }
+        }
+
+        private WebRequestScheduler()
         {
             enumerator = new RoundRobinObjectEnumerator<WebRequestHandler>();
         }
@@ -28,7 +39,7 @@ namespace NPPES.Loader
             handler.Submit(info);
         }
 
-        internal override string Pending()
+        public override string Pending()
         {
             var all = enumerator.All();
             var individual = string.Join(" | ", all.Select(x => x.Pending()));

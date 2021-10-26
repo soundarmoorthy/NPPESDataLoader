@@ -33,7 +33,6 @@ namespace NPPES.Loader.Framework
 
         public virtual void Run()
         {
-
             while (true)
             {
                 if (jobs.IsEmpty)
@@ -42,14 +41,16 @@ namespace NPPES.Loader.Framework
                 {
                     var success = jobs.TryDequeue(out T info);
                     if (success)
+                    {
                         Process(info);
+                    }
                 }
             }
         }
 
         protected abstract void Process(T info);
 
-        internal virtual string Pending()
+        public virtual string Pending()
         {
             return this.jobs.Count().ToString();
         }

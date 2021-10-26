@@ -13,7 +13,7 @@ namespace NPPES.Loader
         {
         }
 
-        private void postProcess(HttpWebResponse response)
+        private void postProcess(HttpWebResponse response, NPIRequest request)
         {
             Console.WriteLine("\tReceived");
 
@@ -32,7 +32,8 @@ namespace NPPES.Loader
 
             try
             {
-                DataFactory.Save(json);
+                var npiResponse = NpiResponse.Create(request, json);
+                DataFactory.SaveProvider(npiResponse);
             }
             catch (Exception ex)
             {
@@ -40,14 +41,13 @@ namespace NPPES.Loader
             }
         }
 
-        protected override void Process(NPIRequest info)
+        protected override void Process(NPIRequest npiRequest)
         {
             try
             {
-                var formed_uri = string.Format(NPIRequest.URI, info.Zip);
-                var request = HttpWebRequest.Create(formed_uri);
+                var request = HttpWebRequest.Create(npiRequest.URI);
                 var response = (HttpWebResponse)request.GetResponse();
-                postProcess(response);
+                postProcess(response, npiRequest);
             }
             catch (Exception ex)
             {

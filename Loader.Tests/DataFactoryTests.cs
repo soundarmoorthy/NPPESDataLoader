@@ -3,6 +3,8 @@ using NUnit.Framework;
 using Moq;
 using System.Collections.Generic;
 using System.Linq;
+using NPPES.Loader;
+using NPPES.Loader.Framework;
 
 namespace Loader.Tests
 {
@@ -13,11 +15,11 @@ namespace Loader.Tests
         {
 
             private Mock<IData> mock = new Mock<IData>();
-            public TestDataProvider(string json, long zipCode)
+            public TestDataProvider(NpiResponse response)
             {
-                mock.Setup(x => x.SaveProvider(json)).Returns(true);
-                mock.Setup(x => x.IsZipCodeProcessed(zipCode)).Returns(true);
-                mock.Setup(x => x.ZipCodes()).Returns(Enumerable.Empty<int>().ToList());
+                mock.Setup(x => x.SaveProvider(response)).Returns(true);
+                mock.Setup(x => x.Processed(response.Request.Address)).Returns(0);
+                mock.Setup(x => x.ZipCodes()).Returns(Enumerable.Empty<Address>().ToList());
             }
             public IData Create()
             {
@@ -28,7 +30,8 @@ namespace Loader.Tests
         [SetUp]
         public void Setup()
         {
-            DataFactory.Initialize(new TestDataProvider("", 601));
+            DataFactory.Initialize(new TestDataProvider
+                    (NpiResponse.Create(NPIRequest.Create(new Address()), "")));
         }
 
         [Test]
@@ -36,7 +39,7 @@ namespace Loader.Tests
         {
             Assert.DoesNotThrow(delegate
             {
-                DataFactory.Processed(601);
+                DataFactory.Processed(new Address());
             });
         }
 
@@ -45,7 +48,8 @@ namespace Loader.Tests
         {
             Assert.DoesNotThrow(delegate
             {
-                DataFactory.Save(string.Empty);
+                var request = NPIRequest.Create(new Address());
+                DataFactory.SaveProvider(NpiResponse.Create(request, ""));
             });
         }
 
