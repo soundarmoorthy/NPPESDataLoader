@@ -12,12 +12,16 @@
     <None Remove="System.Configuration.ConfigurationManager" />
     <None Remove="Data\Implementations\" />
     <None Remove="Microsoft.Extensions.Configuration.Json" />
+    <None Remove="Data\Implementations\Mongo\" />
+    <None Remove="Configuration\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Framework\" />
     <Folder Include="Loader\" />
     <Folder Include="Data\Implementations\" />
+    <Folder Include="Data\Implementations\Mongo\" />
+    <Folder Include="Configuration\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.13.2" />

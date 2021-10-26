@@ -1,31 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NPPES.Loader.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace NPPES.Loader.Data.Implementation
 {
-    public class MongoDataAbstraction : IDataAbstractions
+    public class MongoData : IData
     {
+        private static readonly string tag = $"DataLayer:Implementation:Mongo";
+        private static readonly string url_name = $"{tag}:url";
+        private static readonly string db_name = $"{tag}:db";
+        private static readonly string roaster_name = $"{tag}:roaster_collection";
+        private static readonly string zip_codes = $"{tag}:zip_codes";
         IMongoDatabase db;
         IMongoCollection<BsonDocument> nppes;
         IMongoCollection<BsonDocument> zipEntries;
 
-        public MongoDataAbstraction()
+        public MongoData()
         {
-            var url = "mongodb://localhost:27017";
+            var url = LoaderConfig.Get(url_name);
             var client = new MongoClient(url);
-            db = client.GetDatabase("healthcare");
-            nppes = db.GetCollection<BsonDocument>("nppes_roaster");
+            db = client.GetDatabase(db_name);
+            nppes = db.GetCollection<BsonDocument>(roaster_name);
         }
 
-        bool IDataAbstractions.Processed(long zipCode)
+        bool IData.IsZipCodeProcessed(long zipCode)
         {
             try
             {
-                zipEntries = db.GetCollection<BsonDocument>("us_zip_codes");
+                zipEntries = db.GetCollection<BsonDocument>(zip_codes);
                 var item = zipEntries.Find(x => x["_id"] == $"{zipCode}").Any();
                 return item;
             }
@@ -36,9 +42,9 @@ namespace NPPES.Loader.Data.Implementation
             }
         }
 
-        IEnumerable<int> IDataAbstractions.ZipCodes()
+        IEnumerable<int> IData.ZipCodes()
         {
-            var zipEntries = db.GetCollection<BsonDocument>("us_zip_codes");
+            var zipEntries = db.GetCollection<BsonDocument>(zip_codes);
 
             foreach (var entry in zipEntries.AsQueryable())
             {
@@ -54,7 +60,7 @@ namespace NPPES.Loader.Data.Implementation
             }
         }
 
-        bool IDataAbstractions.Save(string json)
+        bool IData.SaveProvider(string json)
         {
             try
             {

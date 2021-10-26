@@ -5,34 +5,24 @@ using Microsoft.Extensions.Configuration;
 
 namespace NPPES.Loader.Data
 {
-    public static class DataFactory
+    public class DataFactory
     {
-        private static IDataAbstractions data;
+        private static IData data;
 
         static DataFactory()
         {
-
-            var config = GetConfiguration();
-            var impl = config["DataLayer:Implementation"].ToString();
-            var type = Assembly.GetExecutingAssembly().GetType(impl, false);
-            if (type != null)
-                data = Activator.CreateInstance(type) as IDataAbstractions;
-            else
-                throw new TypeLoadException($"The given type {type.ToString()} is not available in the assembly {Assembly.GetExecutingAssembly().FullName}. Please make sure to give a valid fully qualified type name in app.config");
+            var provider = new ConfigurationDataProvider();
+            data = provider.Create();
         }
 
-        private static IConfiguration GetConfiguration()
+        public static void Initialize(IDataProvider overrided)
         {
-            var config = new ConfigurationBuilder().
-            AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-            .Build();
-            return config;
+            data = overrided.Create();
         }
 
+        public static void Save(string json) => data.SaveProvider(json);
 
-        public static void Save(string json) => data.Save(json);
-
-        public static bool Processed(long zipCode)=> data.Processed(zipCode);
+        public static bool Processed(long zipCode)=> data.IsZipCodeProcessed(zipCode);
 
         public static IEnumerable<Int32> ZipCodes() => data.ZipCodes();
     }

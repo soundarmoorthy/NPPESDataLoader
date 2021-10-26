@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NPPES.Loader.Data
 {
-    public interface IDataAbstractions
+    public interface IData
     {
         /// <summary>
 		/// Returns a list of valid zip codes for US.
@@ -17,7 +17,7 @@ namespace NPPES.Loader.Data
 		/// </summary>
 		/// <param name="json">True if saved succesfully, false otherwise</param>
 		/// <remarks>This method is not expected to return </remarks>
-        bool Save(string json);
+        bool SaveProvider(string json);
 
 		/// <summary>
         /// Decides whether providers exist in the database for the given
@@ -25,7 +25,7 @@ namespace NPPES.Loader.Data
         /// </summary>
         /// <param name="zipCode"></param>
         /// <returns></returns>
-		bool Processed(long zipCode);
+		bool IsZipCodeProcessed(long zipCode);
     }
 }
 
