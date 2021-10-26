@@ -18,6 +18,14 @@ namespace NPPES.Loader.Data
 		/// <param name="json">True if saved succesfully, false otherwise</param>
 		/// <remarks>This method is not expected to return </remarks>
         bool Save(string json);
+
+		/// <summary>
+        /// Decides whether providers exist in the database for the given
+        /// zip code.
+        /// </summary>
+        /// <param name="zipCode"></param>
+        /// <returns></returns>
+		bool Processed(long zipCode);
     }
 }
 

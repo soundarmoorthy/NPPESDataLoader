@@ -25,6 +25,9 @@ namespace NPPES.Loader
 
             foreach (var zip in zips)
             {
+                //if (DataFactory.Processed(zip))
+                 //   continue;
+
                 NPIRequest request = new NPIRequest(zip);
                 scheduler.Submit(request);
             }

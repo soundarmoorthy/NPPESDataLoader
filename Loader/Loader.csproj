@@ -9,13 +9,18 @@
     <None Remove="Framework\" />
     <None Remove="Loader\" />
     <None Remove="MongoDB.Driver" />
+    <None Remove="System.Configuration.ConfigurationManager" />
+    <None Remove="Data\Implementations\" />
+    <None Remove="Microsoft.Extensions.Configuration.Json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Framework\" />
     <Folder Include="Loader\" />
+    <Folder Include="Data\Implementations\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.13.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
   </ItemGroup>
 </Project>

@@ -5,12 +5,13 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
-namespace NPPES.Loader.Data
+namespace NPPES.Loader.Data.Implementation
 {
     public class MongoDataAbstraction : IDataAbstractions
     {
         IMongoDatabase db;
         IMongoCollection<BsonDocument> nppes;
+        IMongoCollection<BsonDocument> zipEntries;
 
         public MongoDataAbstraction()
         {
@@ -18,6 +19,21 @@ namespace NPPES.Loader.Data
             var client = new MongoClient(url);
             db = client.GetDatabase("healthcare");
             nppes = db.GetCollection<BsonDocument>("nppes_roaster");
+        }
+
+        bool IDataAbstractions.Processed(long zipCode)
+        {
+            try
+            {
+                zipEntries = db.GetCollection<BsonDocument>("us_zip_codes");
+                var item = zipEntries.Find(x => x["_id"] == $"{zipCode}").Any();
+                return item;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return false;
+            }
         }
 
         IEnumerable<int> IDataAbstractions.ZipCodes()
@@ -62,10 +78,10 @@ namespace NPPES.Loader.Data
             if (results == null)
                 return;
 
+
             foreach (var result in results.AsBsonArray)
             {
                 var npi = result["number"].ToInt64();
-
                 var document = BsonSerializer.Deserialize<BsonDocument>
                     (result.ToString());
                 document.Add("_id", npi);
@@ -77,6 +93,5 @@ namespace NPPES.Loader.Data
                 nppes.InsertManyAsync(documents);
             }
         }
-
     }
 }

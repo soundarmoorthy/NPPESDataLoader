@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using NPPES.Loader.Data;
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
 
 namespace NPPES.Loader.Data
 {
@@ -11,18 +11,29 @@ namespace NPPES.Loader.Data
 
         static DataFactory()
         {
-            data = new MongoDataAbstraction();
+
+            var config = GetConfiguration();
+            var impl = config["DataLayer:Implementation"].ToString();
+            var type = Assembly.GetExecutingAssembly().GetType(impl, false);
+            if (type != null)
+                data = Activator.CreateInstance(type) as IDataAbstractions;
+            else
+                throw new TypeLoadException($"The given type {type.ToString()} is not available in the assembly {Assembly.GetExecutingAssembly().FullName}. Please make sure to give a valid fully qualified type name in app.config");
         }
 
-        public static void Save(string json)
+        private static IConfiguration GetConfiguration()
         {
-            data.Save(json);
+            var config = new ConfigurationBuilder().
+            AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .Build();
+            return config;
         }
 
-        public static IEnumerable<Int32> ZipCodes()
-        {
-            return data.ZipCodes();
-        }
+
+        public static void Save(string json) => data.Save(json);
+
+        public static bool Processed(long zipCode)=> data.Processed(zipCode);
+
+        public static IEnumerable<Int32> ZipCodes() => data.ZipCodes();
     }
 }
-

@@ -7,6 +7,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loader", "Loader\Loader.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NPPES.Workflow.Launcher", "NPPES.Workflow.Launcher\NPPES.Workflow.Launcher.csproj", "{71949D1D-EFD0-4B49-BECD-CE4ACABD7560}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "Loader.Tests\UnitTests.csproj", "{68CEAD15-B531-4A6D-BD89-8B637B91E176}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "IntegrationTests\IntegrationTests.csproj", "{84774DE5-43C0-44ED-80CE-0D7CF05FE4ED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{26CF5D65-B795-40E2-A50E-B2CA1C7F7B80}"
+	ProjectSection(SolutionItems) = preProject
+		NPPES.Datapipeline.workflow.sln = NPPES.Datapipeline.workflow.sln
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +30,14 @@ Global
 		{71949D1D-EFD0-4B49-BECD-CE4ACABD7560}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71949D1D-EFD0-4B49-BECD-CE4ACABD7560}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71949D1D-EFD0-4B49-BECD-CE4ACABD7560}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68CEAD15-B531-4A6D-BD89-8B637B91E176}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68CEAD15-B531-4A6D-BD89-8B637B91E176}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68CEAD15-B531-4A6D-BD89-8B637B91E176}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68CEAD15-B531-4A6D-BD89-8B637B91E176}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84774DE5-43C0-44ED-80CE-0D7CF05FE4ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84774DE5-43C0-44ED-80CE-0D7CF05FE4ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84774DE5-43C0-44ED-80CE-0D7CF05FE4ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84774DE5-43C0-44ED-80CE-0D7CF05FE4ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
