@@ -34,6 +34,19 @@ namespace NPPES.Loader.Data.Implementation
 
             zipEntries = db.GetCollection<Address>
 		            (LoaderConfig.Get(zip_codes));
+
+            RefreshCache();
+        }
+
+        private void RefreshCache()
+        {
+            var npis = nppes.Find(_ => true)
+		               .Project(x => x["_id"].AsInt32).ToList();
+            foreach (var npi in npis)
+            {
+                if (!cache.Contains(npi))
+                    cache.Add(npi);
+            }
         }
 
         int IData.Processed(Address address)
