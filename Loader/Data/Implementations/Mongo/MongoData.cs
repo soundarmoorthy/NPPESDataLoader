@@ -6,6 +6,8 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using NPPES.Loader.Framework;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace NPPES.Loader.Data.Implementation
 {
@@ -86,6 +88,7 @@ namespace NPPES.Loader.Data.Implementation
             }
         }
 
+        static ConcurrentBag<int> cache = new ConcurrentBag<int>();
         private void AddDocuments(NpiResponse response)
         {
 
@@ -100,7 +103,19 @@ namespace NPPES.Loader.Data.Implementation
                 return;
             }
 
-            nppes.InsertMany(documents);
+
+            List<BsonDocument> uniqueDocs = new List<BsonDocument>();
+            Parallel.ForEach(documents, (doc) =>
+            {
+                var npi = doc["number"].ToInt32();
+                if (!cache.Contains(npi))
+                {
+                    doc["_id"] = npi;
+                    uniqueDocs.Add(doc);
+                }
+            });
+            nppes.InsertMany(uniqueDocs);
+
             var count = obj["result_count"].AsInt32;
             if (count < NPIRequest.MAX_RESULTS)
             {
