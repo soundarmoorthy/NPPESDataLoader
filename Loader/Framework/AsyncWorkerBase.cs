@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Concurrent;
 using System.Threading;
+using Serilog;
 
 namespace NPPES.Loader.Framework
 {
@@ -11,9 +12,13 @@ namespace NPPES.Loader.Framework
 
         private AutoResetEvent handle;
         private Thread t;
+        private static int global_index=0;
+        private readonly int index=0;
         public AsyncWorkerBase()
         {
+            index = global_index++;
             t = new Thread(new ThreadStart(Run));
+            t.Name = $"{typeof(T).Name}-Worker-{index}";
             t.IsBackground = true;
             t.Priority = ThreadPriority.Highest;
             jobs = new ConcurrentQueue<T>();
@@ -42,7 +47,9 @@ namespace NPPES.Loader.Framework
                     var success = jobs.TryDequeue(out T info);
                     if (success)
                     {
+                        Log.Information($"[{t.Name}] - Started processing {info}");
                         Process(info);
+                        Log.Information($"[{t.Name}] - Completed processing {info}");
                     }
                 }
             }

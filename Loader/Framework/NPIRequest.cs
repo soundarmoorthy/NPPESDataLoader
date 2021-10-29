@@ -36,6 +36,11 @@ namespace NPPES.Loader
         {
             return NPIRequest.Create(source.Address, source.Skip + 1);
         }
+
+        public override string ToString()
+        {
+            return $"[{Address.ToString()}], [Iteration - {Skip}],{URI}";
+        }
     }
 }
 

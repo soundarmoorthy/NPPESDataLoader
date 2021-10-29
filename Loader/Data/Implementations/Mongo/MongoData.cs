@@ -8,6 +8,8 @@ using MongoDB.Driver;
 using NPPES.Loader.Framework;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Serilog;
+using System.Text;
 
 namespace NPPES.Loader.Data.Implementation
 {
@@ -40,13 +42,18 @@ namespace NPPES.Loader.Data.Implementation
 
         private void RefreshCache()
         {
+            if (nppes == null || !nppes.Find(_ => true).Any())
+                return;
+
             var npis = nppes.Find(_ => true)
-		               .Project(x => x["_id"].AsInt32).ToList();
+		               .Project(x => x["_id"]).ToList();
             foreach (var npi in npis)
             {
-                if (!cache.Contains(npi))
-                    cache.Add(npi);
+                var value = Int32.Parse(npi.ToString());
+                if (!cache.Contains(value))
+                    cache.Add(value);
             }
+            Log.Verbose($"Refreshed cache from underlying data source, Found {cache.Count()} unique NPI's");
         }
 
         int IData.Processed(Address address)
@@ -97,14 +104,14 @@ namespace NPPES.Loader.Data.Implementation
             }
             catch (Exception ex)
             {
+                Log.Error(ex, "Failed to save provider data");
                 return false;
             }
         }
 
-        static ConcurrentBag<int> cache = new ConcurrentBag<int>();
+        static HashSet<int> cache = new HashSet<int>();
         private void AddDocuments(NpiResponse response)
         {
-
             var obj = BsonDocument.Parse(response.Contents);
             if (obj == null)
                 return;
@@ -112,22 +119,34 @@ namespace NPPES.Loader.Data.Implementation
 
             if (!documents.Any())
             {
+                Log.Information($"No documents found for {response.ToString()}");
                 ZipCodeComplete(response);
                 return;
             }
 
 
             List<BsonDocument> uniqueDocs = new List<BsonDocument>();
-            Parallel.ForEach(documents, (doc) =>
+            StringBuilder builder = new StringBuilder();
+            int duplicate = 0;
+            foreach (var doc in documents)
             {
                 var npi = doc["number"].ToInt32();
                 if (!cache.Contains(npi))
                 {
                     doc["_id"] = npi;
                     uniqueDocs.Add(doc);
+                    cache.Add(npi);
                 }
-            });
-            nppes.InsertMany(uniqueDocs);
+                else
+                {
+                    ++duplicate;
+                    builder.Append($",{npi}");
+                }
+            }
+            Log.Warning($"{duplicate} of {documents.Count()} documents duplicate. Discarding them. Duplicated NPI's are [{builder.ToString().Substring(0,100 > builder.Length ? builder.Length : 100)} ... and more]");
+
+            if (uniqueDocs.Any())
+                nppes.InsertMany(uniqueDocs);
 
             var count = obj["result_count"].AsInt32;
             if (count < NPIRequest.MAX_RESULTS)
@@ -136,12 +155,13 @@ namespace NPPES.Loader.Data.Implementation
                 //processed all zip codes. So we can set the "processed" flag
                 //to true
                 ZipCodeComplete(response);
+                Log.Verbose($"{response.Request.Address} is comlete");
             }
             else
             {
+                Log.Verbose($"{response.Request.Address} is scheduled for next iteration");
                 ScheduleNext(response);
             }
-
         }
 
         private IEnumerable<BsonDocument> GetDocuments(BsonDocument doc)

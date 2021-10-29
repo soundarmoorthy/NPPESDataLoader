@@ -8,7 +8,7 @@ namespace NPPES.Loader.Framework
     {
         private readonly LinkedList<T> wl = new LinkedList<T>();
 
-        private static readonly int itemCount = 7;
+        private static readonly int itemCount = 15;
         public RoundRobinObjectEnumerator()
         {
             var start = wl.AddFirst(new T());

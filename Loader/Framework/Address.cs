@@ -33,8 +33,13 @@ namespace NPPES.Loader.Framework
         /// <summary>
         /// Number of batches processed so far
         /// </summary>
-        public int BatchCount { get; set; } 
+        public int BatchCount { get; set; }
 
+
+        public override string ToString()
+        {
+            return $"{City}, {County},{State}, {_id}";
+        }
 
     }
 

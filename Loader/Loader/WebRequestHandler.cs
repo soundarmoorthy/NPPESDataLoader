@@ -4,6 +4,7 @@ using System.Net;
 using System.Text;
 using NPPES.Loader.Data;
 using NPPES.Loader.Framework;
+using Serilog;
 
 namespace NPPES.Loader
 {
@@ -15,8 +16,6 @@ namespace NPPES.Loader
 
         private void postProcess(HttpWebResponse response, NPIRequest request)
         {
-            Console.WriteLine("\tReceived");
-
             if (response.StatusCode != HttpStatusCode.OK)
                 return;
 
@@ -28,7 +27,11 @@ namespace NPPES.Loader
             }
 
             if (string.IsNullOrEmpty(json))
+            {
+                Log.Debug($"Empty resonse returned for address {request.Address}"
+                    +", iteration {request.Skip}. URL is {request.URI}");
                 return;
+            }
 
             try
             {
