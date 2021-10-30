@@ -28,7 +28,7 @@ namespace NPPES.Loader
 		               "&taxonomy_description=&first_name=&last_name=&organization_name" +
 		               "=&address_purpose=&city="+address.City.Trim() +
 		               "&state="+address.State.Trim() + "&postal_code="+ address._id.Trim() +
-		               "&country_code=US&limit=" + MAX_RESULTS + "&skip="+Skip +
+		               "&country_code=US&limit=" + MAX_RESULTS + "&skip="+(Skip * MAX_RESULTS) +
 	                   "&version=2.0";
         }
 

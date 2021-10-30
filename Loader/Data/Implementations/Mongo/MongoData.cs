@@ -40,6 +40,9 @@ namespace NPPES.Loader.Data.Implementation
             RefreshCache();
         }
 
+
+        private static object _cache_lock = new object();
+
         private void RefreshCache()
         {
             if (nppes == null || !nppes.Find(_ => true).Any())
@@ -50,8 +53,11 @@ namespace NPPES.Loader.Data.Implementation
             foreach (var npi in npis)
             {
                 var value = Int32.Parse(npi.ToString());
-                if (!cache.Contains(value))
-                    cache.Add(value);
+                lock (_cache_lock)
+                {
+                    if (!cache.Contains(value))
+                        cache.Add(value);
+                }
             }
             Log.Verbose($"Refreshed cache from underlying data source, Found {cache.Count()} unique NPI's");
         }
@@ -124,23 +130,25 @@ namespace NPPES.Loader.Data.Implementation
                 return;
             }
 
-
             List<BsonDocument> uniqueDocs = new List<BsonDocument>();
             StringBuilder builder = new StringBuilder();
             int duplicate = 0;
             foreach (var doc in documents)
             {
                 var npi = doc["number"].ToInt32();
-                if (!cache.Contains(npi))
+                lock (_cache_lock)
                 {
-                    doc["_id"] = npi;
-                    uniqueDocs.Add(doc);
-                    cache.Add(npi);
-                }
-                else
-                {
-                    ++duplicate;
-                    builder.Append($",{npi}");
+                    if (!cache.Contains(npi))
+                    {
+                        doc["_id"] = npi;
+                        uniqueDocs.Add(doc);
+                        cache.Add(npi);
+                    }
+                    else
+                    {
+                        ++duplicate;
+                        builder.Append($",{npi}");
+                    }
                 }
             }
             Log.Warning($"{duplicate} of {documents.Count()} documents duplicate. Discarding them. Duplicated NPI's are [{builder.ToString().Substring(0,100 > builder.Length ? builder.Length : 100)} ... and more]");
@@ -149,7 +157,7 @@ namespace NPPES.Loader.Data.Implementation
                 nppes.InsertMany(uniqueDocs);
 
             var count = obj["result_count"].AsInt32;
-            if (count < NPIRequest.MAX_RESULTS)
+            if (count < NPIRequest.MAX_RESULTS || duplicate == NPIRequest.MAX_RESULTS /* Are all returned NPI's duplicat */)
             {
                 //If we have less than MAX_RESULTS then it means that we have
                 //processed all zip codes. So we can set the "processed" flag
