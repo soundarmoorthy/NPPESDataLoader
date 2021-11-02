@@ -10,7 +10,7 @@ namespace NPPES.Loader.Data
 		/// Returns a list of valid zip codes for US.
 		/// </summary>
 		/// <returns>A valid 3 (or) 5 (or) 7 (or) 9 digit zip code</returns>
-        IList<Address> ZipCodes();
+        IList<ZipcodeMetadata> ZipCodes();
 
         /// <summary>
 		/// Given a json representation of provider NPI data stores them
@@ -27,7 +27,7 @@ namespace NPPES.Loader.Data
         /// <param name="address">The address information that includes zipcode, city, county, state
         /// <returns>0 if the zip is not processed. A positive integer
 	    /// that represents the number of batches processed so far</returns>
-		int Processed(Address address);
+		int Processed(ZipcodeMetadata address);
     }
 }
 

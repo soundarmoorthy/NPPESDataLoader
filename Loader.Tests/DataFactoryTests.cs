@@ -19,7 +19,7 @@ namespace Loader.Tests
             {
                 mock.Setup(x => x.SaveProvider(response)).Returns(true);
                 mock.Setup(x => x.Processed(response.Request.Address)).Returns(0);
-                mock.Setup(x => x.ZipCodes()).Returns(Enumerable.Empty<Address>().ToList());
+                mock.Setup(x => x.ZipCodes()).Returns(Enumerable.Empty<ZipcodeMetadata>().ToList());
             }
             public IData Create()
             {
@@ -31,7 +31,7 @@ namespace Loader.Tests
         public void Setup()
         {
             DataFactory.Initialize(new TestDataProvider
-                    (NpiResponse.Create(NPIRequest.Create(new Address()), "")));
+                    (NpiResponse.Create(NPIRequest.Create(new ZipcodeMetadata()), "")));
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace Loader.Tests
         {
             Assert.DoesNotThrow(delegate
             {
-                DataFactory.Processed(new Address());
+                DataFactory.Processed(new ZipcodeMetadata());
             });
         }
 
@@ -48,7 +48,7 @@ namespace Loader.Tests
         {
             Assert.DoesNotThrow(delegate
             {
-                var request = NPIRequest.Create(new Address());
+                var request = NPIRequest.Create(new ZipcodeMetadata());
                 DataFactory.SaveProvider(NpiResponse.Create(request, ""));
             });
         }

@@ -1,7 +1,6 @@
-﻿using System;
-namespace NPPES.Loader.Framework
+﻿namespace NPPES.Loader.Framework
 {
-    public class Address
+    public class ZipcodeMetadata
     {
         /// <summary>
         /// The actual ZipCode in 5 digits

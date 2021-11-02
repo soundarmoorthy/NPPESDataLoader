@@ -24,7 +24,7 @@ namespace NPPES.Loader.Data.Implementation
         private static readonly string FALSE="false";
         IMongoDatabase db;
         IMongoCollection<BsonDocument> nppes;
-        IMongoCollection<Address> zipEntries;
+        IMongoCollection<ZipcodeMetadata> zipEntries;
 
         public MongoData()
         {
@@ -34,7 +34,7 @@ namespace NPPES.Loader.Data.Implementation
             nppes = db.GetCollection<BsonDocument>
 		            (LoaderConfig.Get(roaster_name));
 
-            zipEntries = db.GetCollection<Address>
+            zipEntries = db.GetCollection<ZipcodeMetadata>
 		            (LoaderConfig.Get(zip_codes));
 
             RefreshCache();
@@ -62,11 +62,11 @@ namespace NPPES.Loader.Data.Implementation
             Log.Verbose($"Refreshed cache from underlying data source, Found {cache.Count()} unique NPI's");
         }
 
-        int IData.Processed(Address address)
+        int IData.Processed(ZipcodeMetadata address)
         {
             try
             {
-                var filter = Builders<Address>.Filter.Eq(x => x._id, address._id);
+                var filter = Builders<ZipcodeMetadata>.Filter.Eq(x => x._id, address._id);
                 var entry = zipEntries.Find(filter);
                 if (entry == null || entry.First() == null)
                     return -1; //Unknown pincode from our list
@@ -91,9 +91,9 @@ namespace NPPES.Loader.Data.Implementation
             }
         }
 
-        IList<Address> IData.ZipCodes()
+        IList<ZipcodeMetadata> IData.ZipCodes()
         {
-            List<Address> addresses = new List<Address>();
+            List<ZipcodeMetadata> addresses = new List<ZipcodeMetadata>();
             foreach (var address in zipEntries.Find(_ => true).ToList())
             {
                 addresses.Add(address);
@@ -157,7 +157,7 @@ namespace NPPES.Loader.Data.Implementation
                 nppes.InsertMany(uniqueDocs);
 
             var count = obj["result_count"].AsInt32;
-            if (count < NPIRequest.MAX_RESULTS || duplicate == NPIRequest.MAX_RESULTS /* Are all returned NPI's duplicat */)
+            if (count < NPIRequest.MAX_RESULTS)
             {
                 //If we have less than MAX_RESULTS then it means that we have
                 //processed all zip codes. So we can set the "processed" flag
@@ -192,8 +192,8 @@ namespace NPPES.Loader.Data.Implementation
         private void ScheduleNext(NpiResponse response)
         {
             var add = response.Request.Address;
-            var filter = Builders<Address>.Filter.Eq(x => x._id, add._id);
-            var update = Builders<Address>.Update
+            var filter = Builders<ZipcodeMetadata>.Filter.Eq(x => x._id, add._id);
+            var update = Builders<ZipcodeMetadata>.Update
                         .Set(x => x.BatchCount, add.BatchCount + 1)
                         .Set(x => x.Processed, FALSE);
 
@@ -205,8 +205,8 @@ namespace NPPES.Loader.Data.Implementation
 
         private void ZipCodeComplete(NpiResponse response)
         {
-            var filter = Builders<Address>.Filter.Eq(x => x._id, response.Request.Address._id);
-            var update = Builders<Address>.Update
+            var filter = Builders<ZipcodeMetadata>.Filter.Eq(x => x._id, response.Request.Address._id);
+            var update = Builders<ZipcodeMetadata>.Update
                         .Set(x => x.BatchCount, response.Request.Skip + 1)
                         .Set(x => x.Processed, TRUE);
             var document = zipEntries.FindOneAndUpdate(filter, update);

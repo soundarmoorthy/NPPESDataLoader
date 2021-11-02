@@ -12,15 +12,15 @@ namespace NPPES.Loader
         public string URI { get; private set; }
 
     
-        public Address Address { get; private set; }
+        public ZipcodeMetadata Address { get; private set; }
         public int Skip { get; private set; }
 
-        public static NPIRequest Create(Address address, int skip = 0)
+        public static NPIRequest Create(ZipcodeMetadata address, int skip = 0)
         {
             return new NPIRequest(address, skip);
         }
 
-        private NPIRequest(Address address, int skip)
+        private NPIRequest(ZipcodeMetadata address, int skip)
         {
             this.Address = address;
             this.Skip = skip;

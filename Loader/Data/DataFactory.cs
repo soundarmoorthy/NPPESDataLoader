@@ -23,8 +23,8 @@ namespace NPPES.Loader.Data
 
         public static void SaveProvider(NpiResponse response) => data.SaveProvider(response);
 
-        public static int Processed(Address address)=> data.Processed(address);
+        public static int Processed(ZipcodeMetadata address)=> data.Processed(address);
 
-        public static IEnumerable<Address> ZipCodes() => data.ZipCodes();
+        public static IEnumerable<ZipcodeMetadata> ZipCodes() => data.ZipCodes();
     }
 }
